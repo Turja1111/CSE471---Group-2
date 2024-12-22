@@ -12,6 +12,12 @@ const Profile = () => {
         email: "",
         password: "",
         newPassword: "",
+        referral: "",
+        mentalCondition: "",
+        ageGroup: "",
+        country: "",
+        goals: "",
+        preferences: ""
     });
 
     useEffect(() => {
@@ -33,9 +39,17 @@ const Profile = () => {
                     name: user.name,
                     username: user.username,
                     email: user.email,
+                    referral: user.referral,
+                    mentalCondition: user.mentalCondition,
+                    ageGroup: user.ageGroup,
+                    country: user.country,
+                    goals: user.goals,
+                    preferences: user.preferences,
                     password: "",
                     newPassword: "",
                 });
+                console.log(user);
+                console.log(formData);
                 setError(null);
             } catch (err) {
                 setError("Failed to load profile. Please log in again.");
@@ -123,6 +137,70 @@ const Profile = () => {
                             placeholder="Email"
                             className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
                         />
+                        <select
+                            name="referral"
+                            value={formData.referral}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
+                        >
+                            <option value="">How did you find us?</option>
+                            <option value="social">Social Media</option>
+                            <option value="friend">Friend</option>
+                            <option value="search">Search Engine</option>
+                            <option value="other">Other</option>
+                        </select>
+
+                        <select
+                            name="mentalCondition"
+                            value={formData.mentalCondition}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
+                        >
+                            <option value="">Select your condition</option>
+                            <option value="Anxiety">Anxiety</option>
+                            <option value="Depression">Depression</option>
+                            <option value="PTSD">PTSD</option>
+                            <option value="Bipolar">Bipolar</option>
+                            <option value="Other">Other</option>
+                        </select>
+
+                        <select
+                            name="ageGroup"
+                            value={formData.ageGroup}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
+                        >
+                            <option value="">Select age group</option>
+                            <option value="Under 18">Under 18</option>
+                            <option value="18-24">18-24</option>
+                            <option value="25-34">25-34</option>
+                            <option value="35-44">35-44</option>
+                            <option value="45-54">45-54</option>
+                            <option value="55+">55+</option>
+                        </select>
+
+                        <input
+                            type="text"
+                            name="country"
+                            value={formData.country}
+                            onChange={handleChange}
+                            placeholder="Country"
+                            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
+                        />
+                        <textarea
+                            name="goals"
+                            value={formData.goals}
+                            onChange={handleChange}
+                            placeholder="What are your goals?"
+                            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
+                        />
+                        <textarea
+                            name="preferences"
+                            value={formData.preferences}
+                            onChange={handleChange}
+                            placeholder="Your preferences"
+                            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
+                        />
                         <input
                             type="password"
                             name="password"
@@ -136,7 +214,7 @@ const Profile = () => {
                             name="newPassword"
                             value={formData.newPassword}
                             onChange={handleChange}
-                            placeholder="New Password"
+                            placeholder="New Password (optional)"
                             className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
                         />
                         <button

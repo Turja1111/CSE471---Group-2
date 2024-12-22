@@ -1,116 +1,13 @@
 import bcrypt from "bcrypt";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
+import Post from '../models/Post.js';
 
 const JWT_SECRET = "soul";
 
-export async function signup(request, response) {
-    try {
-        const body = await request.body;
-        const {
-            referral,
-            mentalCondition,
-            name,
-            username,
-            email,
-            password,
-            ageGroup,
-            gender,
-            country,
-            goals,
-            preferences
-        } = body;
-        const requiredFields = {
-            referral,
-            mentalCondition,
-            name,
-            username,
-            email,
-            password,
-            ageGroup,
-            gender,
-            country,
-            goals,
-            preferences
-        };
-        const missingFields = Object.entries(requiredFields)
-            .filter(([_, value]) => !value)
-            .map(([key]) => key);
-
-        if (missingFields.length > 0) {
-            return response.status(400).json({
-                message: `Missing required fields: ${missingFields.join(', ')}`
-            });
-        }
-        const existingUser = await User.findOne({ email });
-
-        if (existingUser) {
-            if (existingUser.email === email) {
-                return response.status(400).json({
-                    message: "Email already in use."
-                });
-            }
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({
-            referral,
-            mentalCondition,
-            name,
-            username,
-            email,
-            password: hashedPassword,
-            ageGroup,
-            gender,
-            country,
-            goals,
-            preferences
-        });
-        await newUser.save();
-
-        return response.status(201).json({
-            message: "User registered successfully.",
-            user: {
-                username: newUser.username,
-                email: newUser.email
-            }
-        });
-
-    } catch (error) {
-        console.error("Error during signup:", error);
-        return response.status(500).json({
-            message: "Internal server error."
-        });
-    }
-}
-
-export async function login(request, response) {
-    try {
-        const { email, password } = request.body;
-        const user = await User.findOne({ email });
-        if (!user) {
-            return response.status(401).json({ message: "Invalid email or password." });
-        }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return response.status(401).json({ message: "Invalid email or password." });
-        }
-        const token = jwt.sign(
-            { id: user._id, email: user.email, username: user.username },
-            JWT_SECRET,
-            { expiresIn: "2h" }
-        );
-
-        return response.status(200).json({
-            message: "Login successful.",
-            token,
-        });
-    } catch (error) {
-        console.error("Error during login:", error);
-        return response.status(500).json({ message: "Internal server error." });
-    }
-}
 
 export const profile = async (req, res) => {
+    console.log("Received request to get profile");
     try {
         const user = await User.findById(req.user.id);
         if (!user) {
@@ -157,3 +54,162 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({ message: "Internal server error." });
     }
 };
+
+export const createPost = async (req, res) => {
+    console.log("Received request to create a post");
+    try {
+        const newPost = new Post({
+            content: req.body.content,
+            imageUrl: req.body.imageUrl,
+            category: req.body.category,
+            author: req.user.id,
+        });
+        await newPost.save();
+        res.status(201).json(newPost);
+    } catch (error) {
+        res.status(500).json({ message: 'Error creating post' });
+    }
+}
+
+export const updatePost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        if (post.author.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized to edit this post' });
+        }
+
+        post.content = req.body.content;
+        post.imageUrl = req.body.imageUrl;
+        post.category = req.body.category || post.category;
+        await post.save();
+
+        res.json(post);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating post' });
+    }
+};
+
+export const getPosts = async (req, res) => {
+    try {
+        const { category } = req.query;
+        const query = category && category !== 'all' ? { category } : {};
+        
+        const posts = await Post.find(query)
+            .sort({ createdAt: -1 })
+            .populate('author', 'username avatar');
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching posts' });
+    }
+};
+
+export const deletePost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        if (post.author.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized to delete this post' });
+        }
+
+        await post.deleteOne();
+        res.json({ message: 'Post deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting post' });
+    }
+};
+
+export const upvotePost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        const upvoteIndex = post.upvotes.indexOf(req.user.id);
+        if (upvoteIndex === -1) {
+            post.upvotes.push(req.user.id);
+        } else {
+            post.upvotes.splice(upvoteIndex, 1);
+        }
+        await post.save();
+        res.json(post);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating upvote' });
+    }
+};
+
+export const addComment = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        const comment = {
+            user: req.user.id,
+            content: req.body.content
+        };
+        post.comments.push(comment);
+        await post.save();
+        
+        const populatedPost = await Post.findById(post._id)
+            .populate('comments.user', 'username avatar _id');
+        
+        res.json(populatedPost);
+    } catch (error) {
+        res.status(500).json({ message: 'Error adding comment' });
+    }
+};
+
+export const getComments = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id)
+            .populate('comments.user', 'username avatar _id');
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        res.json(post.comments);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching comments' });
+    }
+};
+
+export const deleteComment = async (req, res) => {
+    console.log("Received request to delete a comment");
+    try {
+        const post = await Post.findById(req.params.postId);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        const comment = post.comments.id(req.params.commentId);
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found' });
+        }
+
+        if (comment.user.toString() !== req.user.id) {
+            console.log("Post not authorized to delete this comment");
+            return res.status(403).json({ message: 'Not authorized to delete this comment' });
+        }
+        console.log("Comment found and authorized to delete");
+        post.comments.pull({ _id: req.params.commentId });
+        await post.save();
+        console.log("Comment deleted successfully");
+        
+        const populatedPost = await Post.findById(post._id)
+            .populate('comments.user', 'username avatar');
+        
+        res.json(populatedPost);
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting comment' });
+    }
+};
+
+

@@ -6,6 +6,7 @@ import Profile from './pages/Profile'
 import CompanionText from './pages/CompanionText'
 import TrainingProgram from './pages/TrainingProgram'
 import Admin from './pages/Admin'
+import Forum from './pages/Forum'
 
 const Home = () => (
   <div className="max-w-4xl mx-auto mt-16 p-8 text-center">
@@ -15,6 +16,7 @@ const Home = () => (
 )
 
 const App = () => {
+  const[api,setapi] = useState("")
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
@@ -51,9 +53,16 @@ const App = () => {
                 <Link to="/signup" className="text-white hover:text-sage-100 transition-all duration-300">
                   <span className="hover:-translate-y-0.5 inline-block transform">Sign Up</span>
                 </Link>
+
               </>
             ) : (
               <>
+                <Link to="/forum" className="text-white hover:text-sage-100 transition-all duration-300">
+                  <span className="hover:-translate-y-0.5 inline-block transform">Forum</span>
+                </Link>
+                <Link to="/timeline" className="text-white hover:text-sage-100 transition-all duration-300">
+                  <span className="hover:-translate-y-0.5 inline-block transform">My Timeline</span>
+                </Link>
                 <Link to="/profile" className="text-white hover:text-sage-100 transition-all duration-300">
                   <span className="hover:-translate-y-0.5 inline-block transform">Profile</span>
                 </Link>
@@ -68,6 +77,9 @@ const App = () => {
           </div>
         </div>
       </nav>
+      <div>
+      
+      </div>
 
       <div className="bg-gradient-to-br from-sage-50 via-slate-50 to-sage-100 min-h-screen">
         <Routes>
@@ -78,6 +90,7 @@ const App = () => {
           <Route path="/become-a-companion" element={<CompanionText />} />
           <Route path="/training-program" element={<TrainingProgram />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/forum" element={<Forum />} />
         </Routes>
       </div>
     </Router>
