@@ -19,11 +19,15 @@ export const profile = async (req, res) => {
     }
 };
 
-
 export const updateProfile = async (req, res) => {
     console.log("Received request to update profile");
     try {
-        const { name, username, email, password, newPassword } = req.body;
+        const { name, username, email, password, newPassword, referral,
+            mentalCondition,
+            ageGroup,
+            country,
+            goals,
+            preferences } = req.body;
         const userId = req.user.id; // Get user ID from the token
         const user = await User.findById(userId);
         if (!user) {
@@ -40,20 +44,30 @@ export const updateProfile = async (req, res) => {
             }
             user.password = await bcrypt.hash(newPassword, 10);
         }
+        const user_updated = await User.findByIdAndUpdate(userId, {
+            name,
+            username,
+            email,
+            referral,
+            mentalCondition,
+            ageGroup,
+            country,
+            goals,
+            preferences
+        }, { new: true });  
+        // user.name = name || user.name;
+        // user.username = username || user.username;
+        // user.email = email || user.email;
 
-        // Update user profile fields
-        user.name = name || user.name;
-        user.username = username || user.username;
-        user.email = email || user.email;
-
-        await user.save();
-
+        await user_updated.save();
+        console.log("User updated:", user_updated);
         res.status(200).json({ user });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error." });
     }
 };
+
 
 export const createPost = async (req, res) => {
     console.log("Received request to create a post");
