@@ -1,15 +1,38 @@
 import bcrypt from "bcrypt";
 import User from "../models/userModel.js";
-import jwt from "jsonwebtoken";
 import Post from '../models/Post.js';
+import ProfilePicture from "../models/profilePicture.js";
+import multer from 'multer';
+import path from 'path';
 
-const JWT_SECRET = "soul";
+
+
+
+const storage = multer.diskStorage({
+    
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage,
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.mimetype)) {
+            return cb(new Error('Only images are allowed'), false);
+        }
+        cb(null, true);
+    } });
 
 
 export const profile = async (req, res) => {
     console.log("Received request to get profile");
     try {
         const user = await User.findById(req.user.id);
+        console.log("User found:", user);
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
@@ -18,6 +41,7 @@ export const profile = async (req, res) => {
         res.status(500).json({ message: "Internal server error." });
     }
 };
+
 
 export const updateProfile = async (req, res) => {
     console.log("Received request to update profile");
@@ -44,6 +68,9 @@ export const updateProfile = async (req, res) => {
             }
             user.password = await bcrypt.hash(newPassword, 10);
         }
+        var v = true
+        if (user.email != email) v = false;
+
         const user_updated = await User.findByIdAndUpdate(userId, {
             name,
             username,
@@ -53,40 +80,116 @@ export const updateProfile = async (req, res) => {
             ageGroup,
             country,
             goals,
-            preferences
-        }, { new: true });  
-        // user.name = name || user.name;
-        // user.username = username || user.username;
-        // user.email = email || user.email;
+            preferences,
+            verified: v
+        }, { new: true });
+
 
         await user_updated.save();
         console.log("User updated:", user_updated);
-        res.status(200).json({ user });
+        res.status(200).json({ user: user_updated });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error." });
     }
 };
 
+export const uploadProfilePicture = async (req, res) => {
+    try {
+        const uploadResult = await new Promise((resolve, reject) => {
+            upload.single('image')(req, res, (err) => {
+                if (err) reject(err);
+                resolve(req.file);
+            });
+        });
+
+        if (!uploadResult) {
+            return res.status(400).json({ message: 'No image file provided' });
+        }
+
+        const imageUrl = `/uploads/${uploadResult.filename}`;
+        
+        // Update user's profile picture
+        const profilePic = await ProfilePicture.findOneAndUpdate(
+            { user: req.user.id },
+            { imageUrl: imageUrl },
+            { upsert: true, new: true }
+        );
+
+        res.status(200).json({ 
+            message: 'Profile picture updated successfully',
+            imageUrl: imageUrl 
+        });
+
+    } catch (error) {
+        console.error('Profile picture upload error:', error);
+        res.status(500).json({ message: 'Error uploading profile picture' });
+    }
+};
+export const getProfilePicture = async (req, res) => {
+    try {
+        const profilePic = await ProfilePicture.findOne({ user: req.user.id });
+        
+        if (!profilePic) {
+            console.log('No profile picture found for user:', req.user.id);
+            return res.status(200).json({ imageUrl: null });
+        }
+
+        res.status(200).json({ imageUrl: profilePic.imageUrl });
+        
+    } catch (error) {
+        console.error('Error fetching profile picture:', error);
+        res.status(500).json({ message: 'Error fetching profile picture' });
+    }
+};
+
 
 export const createPost = async (req, res) => {
-    console.log("Received request to create a post");
+    console.log("Received request to create post");
     try {
+        // Handle file upload
+        const uploadResult = await new Promise((resolve, reject) => {
+            upload.single('image')(req, res, (err) => {
+                if (err) reject(err);
+                resolve(req.file);
+            });
+        });
+
+        // Validate required fields
+        if (!req.body.content || !req.body.category) {
+            return res.status(400).json({
+                message: 'Content and category are required'
+            });
+        }
+
+        // Create and save post
         const newPost = new Post({
             content: req.body.content,
-            imageUrl: req.body.imageUrl,
             category: req.body.category,
             author: req.user.id,
+            imageUrl: uploadResult ? `/uploads/${uploadResult.filename}` : null
         });
-        await newPost.save();
-        res.status(201).json(newPost);
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating post' });
-    }
-}
 
+        await newPost.save();
+        console.log('Post created:', newPost);
+        return res.status(201).json(newPost);
+
+    } catch (error) {
+        console.error('Post creation error:', error);
+        return res.status(error.status || 500).json({
+            message: error.message || 'Error creating post'
+        });
+    }
+};
 export const updatePost = async (req, res) => {
     try {
+        const uploadResult = await new Promise((resolve, reject) => {
+            upload.single('image')(req, res, (err) => {
+                if (err) reject(err);
+                resolve(req.file);
+            });
+        });
+
         const post = await Post.findById(req.params.id);
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
@@ -97,21 +200,29 @@ export const updatePost = async (req, res) => {
         }
 
         post.content = req.body.content;
-        post.imageUrl = req.body.imageUrl;
-        post.category = req.body.category || post.category;
-        await post.save();
+        
+        // Handle image updates
+        console.log(req.body.removeImage);
+        if (uploadResult) {
+            post.imageUrl = `/uploads/${uploadResult.filename}`;
+        } else if (req.body.removeImage === 'true') {
+            post.imageUrl = null;
+        }
+        console.log('Post updated:', post);
 
+        await post.save();
         res.json(post);
     } catch (error) {
         res.status(500).json({ message: 'Error updating post' });
     }
 };
 
+
 export const getPosts = async (req, res) => {
     try {
         const { category } = req.query;
         const query = category && category !== 'all' ? { category } : {};
-        
+
         const posts = await Post.find(query)
             .sort({ createdAt: -1 })
             .populate('author', 'username avatar');
@@ -172,10 +283,10 @@ export const addComment = async (req, res) => {
         };
         post.comments.push(comment);
         await post.save();
-        
+
         const populatedPost = await Post.findById(post._id)
             .populate('comments.user', 'username avatar _id');
-        
+
         res.json(populatedPost);
     } catch (error) {
         res.status(500).json({ message: 'Error adding comment' });
@@ -216,14 +327,13 @@ export const deleteComment = async (req, res) => {
         post.comments.pull({ _id: req.params.commentId });
         await post.save();
         console.log("Comment deleted successfully");
-        
+
         const populatedPost = await Post.findById(post._id)
             .populate('comments.user', 'username avatar');
-        
+
         res.json(populatedPost);
     } catch (error) {
         res.status(500).json({ message: 'Error deleting comment' });
     }
 };
-
 
