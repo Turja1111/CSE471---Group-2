@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 const Signup = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-
   const [formData, setFormData] = useState({
     referral: '',
     mentalCondition: '',
@@ -111,7 +110,6 @@ const Signup = () => {
 
     try {
       const response = await axios.post('http://localhost:5000/signup', formData);
-
       if (response.status === 201) {
         setSuccess('You joined our community!');
         setTimeout(() => {
@@ -123,245 +121,155 @@ const Signup = () => {
     }
   };
 
+  const renderOptionButtons = (options, field, title) => (
+    <div className="space-y-4">
+      <h3 className="text-2xl font-medium mb-6" style={{ color: '#4D6A6D' }}>
+        {title}
+      </h3>
+      <div className="space-y-3">
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => handleOptionSelect(field, option)}
+            className="w-full p-4 text-left rounded-xl transition-all duration-300 hover:shadow-md"
+            style={{ 
+              backgroundColor: formData[field] === option ? '#4D6A6D' : 'white',
+              color: formData[field] === option ? 'white' : '#4C5B61',
+              border: `1px solid ${formData[field] === option ? '#4D6A6D' : '#829191'}`
+            }}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-xl font-medium text-slate-700 mb-4">How did you find us?</h3>
-            <div className="space-y-3">
-              {referralOptions.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleOptionSelect('referral', option)}
-                  className={`w-full p-3 text-left rounded-lg border ${
-                    formData.referral === option
-                      ? 'border-sage-500 bg-sage-50'
-                      : 'border-slate-200 hover:border-sage-300'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
+        return renderOptionButtons(referralOptions, 'referral', 'How did you find us?');
       case 2:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-xl font-medium text-slate-700 mb-4">
-              What best describes your condition?
-            </h3>
-            <div className="space-y-3">
-              {mentalConditionOptions.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleOptionSelect('mentalCondition', option)}
-                  className={`w-full p-3 text-left rounded-lg border ${
-                    formData.mentalCondition === option
-                      ? 'border-sage-500 bg-sage-50'
-                      : 'border-slate-200 hover:border-sage-300'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 8:
-        return (
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              name="name"
-              placeholder="Full Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
-            />
-            <input
-              type="text"
-              name="username"
-              placeholder="Pseudo Name"
-              value={formData.username}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
-            />
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
-            />
-            <button
-              type="submit"
-              className="w-full bg-sage-500 text-white py-3 rounded-lg hover:bg-sage-600 transition-all duration-300 ease-in-out"
-            >
-              Sign Up
-            </button>
-          </form>
-        );
-
+        return renderOptionButtons(mentalConditionOptions, 'mentalCondition', 'What best describes your condition?');
       case 3:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-xl font-medium text-slate-700 mb-4">What is your age group?</h3>
-            <div className="space-y-3">
-              {ageGroupOptions.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleOptionSelect('ageGroup', option)}
-                  className={`w-full p-3 text-left rounded-lg border ${
-                    formData.ageGroup === option
-                      ? 'border-sage-500 bg-sage-50'
-                      : 'border-slate-200 hover:border-sage-300'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
+        return renderOptionButtons(ageGroupOptions, 'ageGroup', 'What is your age group?');
       case 4:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-xl font-medium text-slate-700 mb-4">What is your gender?</h3>
-            <div className="space-y-3">
-              {genderOptions.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleOptionSelect('gender', option)}
-                  className={`w-full p-3 text-left rounded-lg border ${
-                    formData.gender === option
-                      ? 'border-sage-500 bg-sage-50'
-                      : 'border-slate-200 hover:border-sage-300'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
+        return renderOptionButtons(genderOptions, 'gender', 'What is your gender?');
       case 5:
         return (
           <div className="space-y-4">
-            <h3 className="text-xl font-medium text-slate-700 mb-4">What country are you from?</h3>
+            <h3 className="text-2xl font-medium mb-6" style={{ color: '#4D6A6D' }}>
+              What country are you from?
+            </h3>
             <input
               type="text"
               name="country"
               placeholder="Country"
               value={formData.country}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-sage-400"
+              className="w-full px-4 py-3 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2"
+              style={{ 
+                border: '1px solid #829191',
+                backgroundColor: 'white'
+              }}
             />
           </div>
         );
-
       case 6:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-xl font-medium text-slate-700 mb-4">What are your goals?</h3>
-            <div className="space-y-3">
-              {goalOptions.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleOptionSelect('goals', option)}
-                  className={`w-full p-3 text-left rounded-lg border ${
-                    formData.goals === option
-                      ? 'border-sage-500 bg-sage-50'
-                      : 'border-slate-200 hover:border-sage-300'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
+        return renderOptionButtons(goalOptions, 'goals', 'What are your goals?');
       case 7:
+        return renderOptionButtons(preferenceOptions, 'preferences', 'What are your preferences?');
+      case 8:
         return (
-          <div className="space-y-4">
-            <h3 className="text-xl font-medium text-slate-700 mb-4">What are your preferences?</h3>
-            <div className="space-y-3">
-              {preferenceOptions.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleOptionSelect('preferences', option)}
-                  className={`w-full p-3 text-left rounded-lg border ${
-                    formData.preferences === option
-                      ? 'border-sage-500 bg-sage-50'
-                      : 'border-slate-200 hover:border-sage-300'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {[
+              { name: 'name', placeholder: 'Full Name' },
+              { name: 'username', placeholder: 'Pseudo Name' },
+              { name: 'email', placeholder: 'Email', type: 'email' },
+              { name: 'password', placeholder: 'Password', type: 'password' },
+              { name: 'confirmPassword', placeholder: 'Confirm Password', type: 'password' }
+            ].map((field) => (
+              <input
+                key={field.name}
+                type={field.type || 'text'}
+                name={field.name}
+                placeholder={field.placeholder}
+                value={formData[field.name]}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2"
+                style={{ 
+                  border: '1px solid #829191',
+                  backgroundColor: 'white'
+                }}
+              />
+            ))}
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl font-medium mt-8 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
+              style={{ 
+                backgroundColor: '#4D6A6D',
+                color: 'white'
+              }}
+            >
+              Create Account
+            </button>
+          </form>
         );
-
       default:
         return null;
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-8 bg-white/90 rounded-xl shadow-sm">
-      <h2 className="text-2xl font-semibold mb-6 text-center text-slate-700">
-        Join Our Community
-      </h2>
-      {renderStep()}
-      {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
-      {success && <p className="text-green-500 text-sm mt-4">{success}</p>}
-      {currentStep < 8 && (
-        <button
-          onClick={nextStep}
-          className="w-full mt-6 bg-sage-500 text-white py-3 rounded-lg hover:bg-sage-600 transition-all duration-300 ease-in-out"
-        >
-          Next
-        </button>
-      )}
-      <div className="mt-4 flex justify-center space-x-2">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
-          <div
-            key={step}
-            className={`w-2 h-2 rounded-full ${
-              currentStep === step ? 'bg-sage-500' : 'bg-slate-200'
-            }`}
-          />
-        ))}
+    <div className="min-h-screen flex items-center justify-center py-12 px-4" style={{ backgroundColor: '#C5C5C5' }}>
+      <div className="max-w-md w-full space-y-8 p-10 rounded-2xl shadow-xl" style={{ backgroundColor: 'white' }}>
+        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#4D6A6D' }}>
+          Join Our Community
+        </h2>
+
+        <div className="mb-8">
+          {renderStep()}
+        </div>
+
+        {error && (
+          <div className="p-3 rounded-lg text-center mb-4" style={{ backgroundColor: '#ffebee', color: '#c62828' }}>
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="p-3 rounded-lg text-center mb-4" style={{ backgroundColor: '#e8f5e9', color: '#2e7d32' }}>
+            {success}
+          </div>
+        )}
+
+        {currentStep < 8 && (
+          <button
+            onClick={nextStep}
+            className="w-full py-3 rounded-xl font-medium transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
+            style={{ 
+              backgroundColor: '#4D6A6D',
+              color: 'white'
+            }}
+          >
+            Continue
+          </button>
+        )}
+
+        <div className="flex justify-center space-x-3 mt-8">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
+            <div
+              key={step}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                currentStep === step ? 'w-4' : ''
+              }`}
+              style={{ 
+                backgroundColor: currentStep === step ? '#4D6A6D' : '#829191'
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -6,12 +6,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        sage: {
-          50: '#f6f7f6',
-          100: '#e3e8e3',
-          400: '#92a892',
-          500: '#718f71',
-          600: '#587158'
+        soulspeak: {
+          primary: '#4D6A6D',
+          secondary: '#4C5B61',
+          gray: '#949896',
+          light: '#829191',
+          lighter: '#C5C5C5'
         }
       }
     }

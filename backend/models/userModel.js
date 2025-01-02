@@ -7,7 +7,8 @@ const userSchema = mongoose.Schema({
     },
     username: {
         type: String,
-        required: [true, "Please provide your Username"] //unique na
+        required: [true, "Please provide your Username"],
+        unique: true
     },
     email: {
         type: String,
@@ -47,6 +48,10 @@ const userSchema = mongoose.Schema({
         default: false
     },
     isCompanion: {
+        type: Boolean,
+        default: false
+    },
+    suspended: {
         type: Boolean,
         default: false
     },

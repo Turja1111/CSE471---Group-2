@@ -2,11 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom'
 import Signup from './pages/Signup'
 import Login from './pages/Login'
-import Profile from './pages/Profile'
-import CompanionText from './pages/CompanionText'
-import TrainingProgram from './pages/TrainingProgram'
-import Admin from './pages/Admin'
-import Forum from './pages/Forum'
+import ResetPassword from './pages/ResetPassword'
+
 import axios from 'axios'
 
 
@@ -20,7 +17,7 @@ const Home = () => {
         setQuote(response.data.slip.advice);
         const data = response.data;
         console.log('Fetched quote:', data);
-        
+
       } catch (error) {
         console.log('Error fetching quote:', error);
         setQuote({
@@ -44,10 +41,16 @@ const Home = () => {
 };
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [user, setUser] = useState(null)
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       const token = localStorage.getItem('token')
-      setIsLoggedIn(!!token)
+      if (token) {
+        const response = await axios.get("http://localhost:5000/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(response.data.user);
+      }
     }, 500)
 
     return () => clearInterval(interval)
@@ -55,11 +58,12 @@ const App = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token')
+    window.location.href = '/login';
   }
 
   return (
     <Router>
-      <nav className="bg-gradient-to-r from-sage-400 to-sage-500 p-4 shadow-sm">
+      <nav className="bg-gradient-to-r from-[#4D6A6D] to-[#4C5B61] p-4 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div>
             <Link to="/" className="text-white text-2xl font-semibold hover:text-sage-100 transition-all duration-300">
@@ -67,10 +71,8 @@ const App = () => {
             </Link>
           </div>
           <div className="space-x-8">
-            <Link to="/become-a-companion" className="text-white hover:text-sage-100 transition-all duration-300">
-              <span className="hover:-translate-y-0.5 inline-block transform">Become A Companion</span>
-            </Link>
-            {!isLoggedIn ? (
+
+            {!user ? (
               <>
                 <Link to="/login" className="text-white hover:text-sage-100 transition-all duration-300">
                   <span className="hover:-translate-y-0.5 inline-block transform">Login</span>
@@ -82,11 +84,19 @@ const App = () => {
               </>
             ) : (
               <>
+                {user && !user.isCompanion && (
+                <Link to="/become-a-companion" className="text-white hover:text-sage-100 transition-all duration-300">
+                  <span className="hover:-translate-y-0.5 inline-block transform">Become A Companion</span>
+                </Link>
+                )}
+                <Link to="/chat" className="text-white hover:text-sage-100 transition-all duration-300">
+                  <span className="hover:-translate-y-0.5 inline-block transform">Chat</span>
+                </Link>
                 <Link to="/forum" className="text-white hover:text-sage-100 transition-all duration-300">
                   <span className="hover:-translate-y-0.5 inline-block transform">Forum</span>
                 </Link>
-                <Link to="/timeline" className="text-white hover:text-sage-100 transition-all duration-300">
-                  <span className="hover:-translate-y-0.5 inline-block transform">My Timeline</span>
+                <Link to="/report" className="text-white hover:text-sage-100 transition-all duration-300">
+                  <span className="hover:-translate-y-0.5 inline-block transform">Report</span>
                 </Link>
                 <Link to="/profile" className="text-white hover:text-sage-100 transition-all duration-300">
                   <span className="hover:-translate-y-0.5 inline-block transform">Profile</span>
@@ -109,11 +119,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/become-a-companion" element={<CompanionText />} />
-          <Route path="/training-program" element={<TrainingProgram />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/forum" element={<Forum />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </div>
     </Router>
